@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -62,6 +64,7 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   var selectedIndex = 0;
+  bool confirmingdeletion = false;
 
   @override
   void initState() {
@@ -95,10 +98,10 @@ class _MainPageState extends State<MainPage> {
     switch (selectedIndex) {
       // Sidebar Navigation
       case 0:
-        page = const Placeholder();
+        page = const Placeholder(); // Home
         break;
       case 1:
-        page = const Placeholder();
+        page = const Placeholder(); // Demo
         break;
       default:
         try {
@@ -110,7 +113,8 @@ class _MainPageState extends State<MainPage> {
         }
     }
 
-    List<ClassRoom> classRooms = appState.sharedPreferencesProvider.getClassRooms();
+    List<ClassRoom> classRooms =
+        appState.sharedPreferencesProvider.getClassRooms();
     List<NavigationRailDestination> classRoomDest = [];
     // for every classroom add a new entry to classroomdest with the corrosponding name
     for (var i = 0; i < classRooms.length; i++) {
@@ -118,17 +122,40 @@ class _MainPageState extends State<MainPage> {
         icon: Badge(
             label: Text(classRooms[i].names.length.toString()),
             child: const Icon(Icons.person_outline)),
-        selectedIcon:
-            Badge(label: Text(classRooms[i].names.length.toString()), child: const Icon(Icons.person)),
+        selectedIcon: Badge(
+            label: Text(classRooms[i].names.length.toString()),
+            child: const Icon(Icons.person)),
         label: Row(
           children: [
             Text(classRooms[i].name),
-            IconButton(onPressed: () async {
-              selectedIndex = i-1;
-              classRooms.removeAt(i);
-              appState.sharedPreferencesProvider.setClassRooms(classRooms);
-              appState.changesMade();
-            }, icon: const Icon(Icons.delete))
+            const SizedBox(
+              width: 2,
+            ),
+            IconButton(
+                onPressed: () async {
+                  if (appState.sharedPreferencesProvider.getConfirmDelete() == true) {
+                    if (confirmingdeletion == false) {
+                      setState(() {
+                        confirmingdeletion = true;
+                      });
+
+                      Future.delayed(const Duration(milliseconds: 500), () {
+                        if (mounted) {
+                          setState(() {
+                            confirmingdeletion = false;
+                          });
+                        }
+                      });
+                      return;
+                    }
+                  }
+
+                  selectedIndex = 0;
+                  classRooms.removeAt(i);
+                  appState.sharedPreferencesProvider.setClassRooms(classRooms);
+                  appState.changesMade();
+                },
+                icon: confirmingdeletion ? const Icon(Icons.delete_forever) : const Icon(Icons.delete))
           ],
         ),
       ));
@@ -177,7 +204,8 @@ class _MainPageState extends State<MainPage> {
               SafeArea(
                 child: SingleChildScrollView(
                   child: ConstrainedBox(
-                    constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                    constraints:
+                        BoxConstraints(minHeight: constraints.maxHeight),
                     child: IntrinsicHeight(
                       child: NavigationRail(
                         key: appState.navigationRailKey,
@@ -185,11 +213,12 @@ class _MainPageState extends State<MainPage> {
                           elevation: 0,
                           onPressed: () async {
                             ClassRoom room = ClassRoom(
-                                name: "Test",
-                                names: ["Test1", "Test2", "Test3"],
-                              );
+                              name: "Test ${(classRooms.length + 1).toString()}",
+                              names: ["Test1", "Test2", "Test3"],
+                            );
                             classRooms.add(room);
-                            appState.sharedPreferencesProvider.setClassRooms(classRooms);
+                            appState.sharedPreferencesProvider
+                                .setClassRooms(classRooms);
                             appState.changesMade();
                           },
                           child: const Icon(Icons.add),
@@ -219,18 +248,17 @@ class _MainPageState extends State<MainPage> {
                         destinations: [
                           // Sidebar Items
                           const NavigationRailDestination(
-                            icon: Badge(
-                                label: Text("28"), child: Icon(Icons.person_outline)),
-                            selectedIcon:
-                                Badge(label: Text("28"), child: Icon(Icons.person)),
-                            label: Text("2AHIT"),
+                            icon: Icon(Icons.home_outlined),
+                            selectedIcon: Icon(Icons.home),
+                            label: Text("Home"),
                           ),
                           const NavigationRailDestination(
                             icon: Badge(
-                                label: Text("31"), child: Icon(Icons.person_outline)),
-                            selectedIcon:
-                                Badge(label: Text("31"), child: Icon(Icons.person)),
-                            label: Text("3AHIT"),
+                                label: Text("31"),
+                                child: Icon(Icons.person_outline)),
+                            selectedIcon: Badge(
+                                label: Text("31"), child: Icon(Icons.person)),
+                            label: Text("Example"),
                           ),
                           ...classRoomDest,
                         ],
