@@ -4,41 +4,56 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
+class Student {
+  String name;
+  bool present;
+
+  Student({required this.name, this.present = true});
+
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+    };
+  }
+
+  factory Student.fromJson(Map<String, dynamic> json) {
+    return Student(
+      name: json['name'] as String,
+    );
+  }
+}
 
 class ClassRoom {
   String id;
   String name;
-  List<String> names;
+  List<Student> students;
+
+  ClassRoom({String? id, this.name = "", List<Student>? students})
+      : id = id ?? const Uuid().v4(),
+        students = students ?? [];
+
+  String toJson() {
+    Map<String, dynamic> data = {
+      'id': id,
+      'name': name,
+      'students': students.map((e) => e.toJson()).toList(),
+    };
+
+    return jsonEncode(data);
+  }
 
   factory ClassRoom.fromJson(String json) {
     Map<String, dynamic> data = jsonDecode(json);
     final id = data['id'] as String;
     final name = data['name'] as String;
-    final savedNames = data['names'] as List<dynamic>;
+    final savedStudents = data['students'] as List<dynamic>;
 
-    List<String> names = [];
-    for (var key in savedNames) {
-      names.add(key);
-    }
-    return ClassRoom(id: id, name: name, names: names,);
+    List<Student> students = savedStudents.map((studentData) {
+      return Student.fromJson(studentData as Map<String, dynamic>);
+    }).toList();
+
+    return ClassRoom(id: id, name: name, students: students);
   }
-
-  String toJson() {
-    return jsonEncode({
-      'id': id,
-      'name': name,
-      'color': name,
-      'names': names.map((key) => key).toList()
-    });
-  }
-
-
-
-  ClassRoom(
-      {String? id,
-      this.name = "",
-      this.names = const []})
-      : id = id ?? const Uuid().v4();
 }
 
 class SharedPreferencesProvider extends ChangeNotifier {
@@ -106,8 +121,6 @@ class SharedPreferencesProvider extends ChangeNotifier {
   void setThemeColor(int color) {
     _sharedPreferences.setInt('app_theme_color', color);
   }
-
-
 
   List<ClassRoom> getClassRooms() {
     List<ClassRoom> output = [];

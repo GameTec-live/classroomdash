@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:classroomdash/helpers.dart';
 import 'package:classroomdash/settings.dart';
+import 'package:classroomdash/classroompage.dart';
 
 // Shared Preferences Provider
 import 'package:classroomdash/sharedprefsprovider.dart';
@@ -101,15 +102,17 @@ class _MainPageState extends State<MainPage> {
         page = const Placeholder(); // Home
         break;
       case 1:
-        page = const Placeholder(); // Demo
+        List<Student> students = [];
+        for (var i = 0; i < 100; i++) {
+          students.add(Student(name: "Test Student $i"));
+        }
+        page = ClassRoomPage(classroom: ClassRoom(name: "Example", students: students)); // Example
         break;
       default:
         try {
-          //page = ClassRoomPage(
-          //    classRoom: appState.sharedPreferencesProvider.getClassRooms()[selectedIndex - 2]);
-          page = const Placeholder();
+          page = ClassRoomPage(classroom: appState.sharedPreferencesProvider.getClassRooms()[selectedIndex - 2]);
         } catch (e) {
-          page = const Placeholder();
+          throw Exception("Classroom not found");
         }
     }
 
@@ -120,10 +123,10 @@ class _MainPageState extends State<MainPage> {
     for (var i = 0; i < classRooms.length; i++) {
       classRoomDest.add(NavigationRailDestination(
         icon: Badge(
-            label: Text(classRooms[i].names.length.toString()),
+            label: Text(classRooms[i].students.length.toString()),
             child: const Icon(Icons.person_outline)),
         selectedIcon: Badge(
-            label: Text(classRooms[i].names.length.toString()),
+            label: Text(classRooms[i].students.length.toString()),
             child: const Icon(Icons.person)),
         label: Row(
           children: [
@@ -214,7 +217,11 @@ class _MainPageState extends State<MainPage> {
                           onPressed: () async {
                             ClassRoom room = ClassRoom(
                               name: "Test ${(classRooms.length + 1).toString()}",
-                              names: ["Test1", "Test2", "Test3"],
+                              students: [
+                                Student(name: "Test Student 1"),
+                                Student(name: "Test Student 2"),
+                                Student(name: "Test Student 3"),
+                              ],
                             );
                             classRooms.add(room);
                             appState.sharedPreferencesProvider
@@ -254,10 +261,10 @@ class _MainPageState extends State<MainPage> {
                           ),
                           const NavigationRailDestination(
                             icon: Badge(
-                                label: Text("31"),
+                                label: Text("3"),
                                 child: Icon(Icons.person_outline)),
                             selectedIcon: Badge(
-                                label: Text("31"), child: Icon(Icons.person)),
+                                label: Text("3"), child: Icon(Icons.person)),
                             label: Text("Example"),
                           ),
                           ...classRoomDest,
