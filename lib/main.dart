@@ -6,6 +6,8 @@ import 'package:provider/provider.dart';
 import 'package:classroomdash/helpers.dart';
 import 'package:classroomdash/settings.dart';
 import 'package:classroomdash/classroompage.dart';
+import 'package:classroomdash/homepage.dart';
+import 'package:classroomdash/create_menu.dart';
 
 // Shared Preferences Provider
 import 'package:classroomdash/sharedprefsprovider.dart';
@@ -45,6 +47,7 @@ class ClassRoomDashState extends ChangeNotifier {
 
   SharedPreferencesProvider? _sharedPreferencesProvider;
   Logger? log;
+  int selectedIndex = 0;
 
   GlobalKey navigationRailKey = GlobalKey();
   Size? navigationRailSize;
@@ -64,7 +67,7 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  var selectedIndex = 0;
+  //var selectedIndex = 0;
   bool confirmingdeletion = false;
 
   @override
@@ -96,21 +99,26 @@ class _MainPageState extends State<MainPage> {
 
     Widget page; // Set Page
 
-    switch (selectedIndex) {
+    switch (appState.selectedIndex) {
       // Sidebar Navigation
       case 0:
-        page = const Placeholder(); // Home
+        page = HomePage(
+            classRooms: appState.sharedPreferencesProvider.getClassRooms());
         break;
       case 1:
         List<Student> students = [];
-        for (var i = 0; i < 100; i++) {
-          students.add(Student(name: "Test Student $i"));
+        for (var i = 0; i < 50; i++) {
+          students.add(Student(name: "Test Student ${i + 1}"));
         }
-        page = ClassRoomPage(classroom: ClassRoom(name: "Example", students: students)); // Example
+        page = ClassRoomPage(
+            classroom:
+                ClassRoom(name: "Example", students: students)); // Example
         break;
       default:
         try {
-          page = ClassRoomPage(classroom: appState.sharedPreferencesProvider.getClassRooms()[selectedIndex - 2]);
+          page = ClassRoomPage(
+              classroom: appState.sharedPreferencesProvider
+                  .getClassRooms()[appState.selectedIndex - 2]);
         } catch (e) {
           throw Exception("Classroom not found");
         }
@@ -136,7 +144,8 @@ class _MainPageState extends State<MainPage> {
             ),
             IconButton(
                 onPressed: () async {
-                  if (appState.sharedPreferencesProvider.getConfirmDelete() == true) {
+                  if (appState.sharedPreferencesProvider.getConfirmDelete() ==
+                      true) {
                     if (confirmingdeletion == false) {
                       setState(() {
                         confirmingdeletion = true;
@@ -153,12 +162,14 @@ class _MainPageState extends State<MainPage> {
                     }
                   }
 
-                  selectedIndex = 0;
+                  appState.selectedIndex = 0;
                   classRooms.removeAt(i);
                   appState.sharedPreferencesProvider.setClassRooms(classRooms);
                   appState.changesMade();
                 },
-                icon: confirmingdeletion ? const Icon(Icons.delete_forever) : const Icon(Icons.delete))
+                icon: confirmingdeletion
+                    ? const Icon(Icons.delete_forever)
+                    : const Icon(Icons.delete))
           ],
         ),
       ));
@@ -215,18 +226,12 @@ class _MainPageState extends State<MainPage> {
                         leading: FloatingActionButton(
                           elevation: 0,
                           onPressed: () async {
-                            ClassRoom room = ClassRoom(
-                              name: "Test ${(classRooms.length + 1).toString()}",
-                              students: [
-                                Student(name: "Test Student 1"),
-                                Student(name: "Test Student 2"),
-                                Student(name: "Test Student 3"),
-                              ],
-                            );
-                            classRooms.add(room);
-                            appState.sharedPreferencesProvider
-                                .setClassRooms(classRooms);
-                            appState.changesMade();
+                            showDialog<String>(
+                                context: context,
+                                builder: (BuildContext context) =>
+                                    const AlertDialog(
+                                        title: Text("Create a classroom"),
+                                        content: CreateMenu()));
                           },
                           child: const Icon(Icons.add),
                         ),
@@ -261,18 +266,18 @@ class _MainPageState extends State<MainPage> {
                           ),
                           const NavigationRailDestination(
                             icon: Badge(
-                                label: Text("3"),
+                                label: Text("50"),
                                 child: Icon(Icons.person_outline)),
                             selectedIcon: Badge(
-                                label: Text("3"), child: Icon(Icons.person)),
+                                label: Text("50"), child: Icon(Icons.person)),
                             label: Text("Example"),
                           ),
                           ...classRoomDest,
                         ],
-                        selectedIndex: selectedIndex,
+                        selectedIndex: appState.selectedIndex,
                         onDestinationSelected: (value) {
                           setState(() {
-                            selectedIndex = value;
+                            appState.selectedIndex = value;
                           });
                         },
                       ),
